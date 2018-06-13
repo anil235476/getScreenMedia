@@ -6,11 +6,17 @@ module.exports = function (constraints, cb) {
     var error;
 
     if (adapter.browserDetails.browser === 'chrome') {
-        // check that the extension is installed by looking for a
-        // sessionStorage variable that contains the extension id
-        // this has to be set after installation unless the content
-        // script does that
-        if (sessionStorage.getScreenMediaJSExtensionId) {
+        if ('getDisplayMedia' in window.navigator) { // prefer spec getDisplayMedia
+            window.navigator.getDisplayMedia({video: true}).then(function (stream) {
+                callback(null, stream);
+            }).catch(function (err) {
+                callback(err);
+            });
+        } else if (sessionStorage.getScreenMediaJSExtensionId) {
+            // check that the extension is installed by looking for a
+            // sessionStorage variable that contains the extension id
+            // this has to be set after installation unless the content
+            // script does that
             chrome.runtime.sendMessage(sessionStorage.getScreenMediaJSExtensionId,
                 {type:'getScreen', id: 1}, null,
                 function (data) {
